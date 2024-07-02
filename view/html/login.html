@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>LOGIN</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="http://localhost/invoice_mgmt/model/js/include_nav.js"></script>
+</head>
+<style>
+    * {
+        text-transform: none;
+    }
+</style>
+
+<body style="background-color:#5E74A5">
+    <div id="navbar-container"></div>
+    <br>
+    <div class="container login jumbotron" id="login" style="margin-left:2%;margin-right:2%; color:#333333;">
+        <h2>Log In</h2>
+
+        <form method="POST" action="../../model/php/login.php">
+
+            <div class="form-group">
+                <input type="text" class="form-control" name="shopId" placeholder="Enter Shop ID">
+            </div>
+            <div class="form-group">
+                <!--<label for="pwd">Password:</label>-->
+                <input type="password" class="form-control" name="password" placeholder="Enter password">
+            </div>
+            <button type="submit" class="btn btn-primary" name="go" style="background-color:#F76C6C">Submit</button>
+        </form>
+    </div>
+    <script>
+        includeNavbar("nav.html", "navbar-container");
+        function storeShopId() {
+            const shopId = document.getElementById('shopId').value;
+            localStorage.setItem('shopId', shopId);
+        }
+    </script>
+</body>
+
+</html>

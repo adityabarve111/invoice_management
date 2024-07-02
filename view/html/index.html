@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="../../model/js/check_login.js"></script>
+    <script src="http://localhost/invoice_mgmt/model/js/include_nav.js"></script>
+    <script src="../../controller/js/fetch_customer_iddetails.js" defer></script>
+    <script src="../../controller/js/fetch_products.js" defer></script>
+</head>
+<body style="background-color:#5E74A5">
+    <div id="navbar-container"></div>
+    <br>
+    <div class="container mt-5">
+        <h1 class="mb-4">Admin Panel</h1>
+        <div class="btn-group mb-4" role="group">
+            <button type="button" class="btn btn-primary" id="addProductTab">Add Product</button>
+            <button type="button" class="btn btn-warning" id="viewProductsTab">View Products</button>
+            <button type="button" class="btn btn-primary" id="addCustomerTab">Add Customer</button>
+            <button type="button" class="btn btn-warning" id="viewCustomersTab">View Customers</button>
+            <button type="button" class="btn btn-primary" id="generateInvoiceTab">Generate Invoice</button>
+            <button type="button" class="btn btn-secondary" disabled>View Invoice</button>
+            <button type="button" class="btn btn-danger" onclick="logout()">Logout</button>
+        </div>
+        <!-- ADD PRODUCT -->
+        <form id="addProductForm" style="color:#333333; display: none;" class="jumbotron" method="post" action="../../model/php/add_product.php">
+            <h2>Add Product</h2>
+            <div class="form-group">
+                <label for="productName">Product Name</label>
+                <input type="text" class="form-control" id="productName" name="productName" placeholder="Enter Product Name">
+            </div>
+            <div class="form-group">
+                <label for="productType">Product Type</label>
+                <input type="text" class="form-control" id="productType" name="productType" placeholder="Enter Product Type">
+            </div>
+            <div class="form-group">
+                <label for="dateOfManufacture">Date of Manufacture</label>
+                <input type="date" class="form-control" name="dateOfManufacture" id="dateOfManufacture">
+            </div>
+            <div class="form-group">
+                <label for="dateOfExpiry">Date of Expiry</label>
+                <input type="date" class="form-control" name="dateOfExpiry" id="dateOfExpiry">
+            </div>
+            <div class="form-group">
+                <label for="quantity">Quantity</label>
+                <input type="number" class="form-control" id="quantity" name="quantity" placeholder="Enter Quantity">
+            </div>
+            <div class="form-group">
+                <label for="price">Price</label>
+                <input type="number" class="form-control" id="Price" name="price" placeholder="Enter Price">
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea class="form-control" name="description" id="description" placeholder="Enter Product Description" rows="5" cols="5"></textarea>
+            </div>
+            <button type="submit" name="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <!-- VIEW PRODUCTS -->
+
+        <div class="mt-4 jumbotron" id="viewProduct" style="display: none;">
+            <!-- View Products list will be displayed here -->
+        </div>
+
+        <!-- ADD CUSTOMER -->
+        
+        <form action="../../model/php/register_customer.php" method="POST" class="jumbotron" id="addCustomerForm" style="color:#333333; display: none;">
+            <h2>Add Customer</h2>
+            <div class="form-group">
+                <label for="customerName">Customer Name</label>
+                <input type="text" class="form-control" id="customerName" name="customerName" placeholder="Customer Name" required>
+            </div>
+            <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" class="form-control" id="address" name="address" placeholder="Customer Address" required>
+            </div>
+            <div class="form-group">
+                <label for="phoneNumber">Phone Number</label>
+                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="Customer phone Number" required>
+            </div>
+            <div class="form-group">
+                <label for="gstNo">GST No</label>
+                <input type="text" class="form-control" id="gstNo" name="gstNo" placeholder="Customer GST No" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" onclick="setInputValue()"  name="submit">Submit</button>
+        </form>
+
+        <!-- VIEW Customers -->
+
+        <div class="mt-4 jumbotron" id="viewCustomer" style="display: none;">
+            <!--  View customers list will be displayed here -->
+        </div>
+        <!-- GENERATE INVOICE -->
+        <form class="jumbotron" id="generateInvoiceForm" method="post" action="../../model/php/save_invoice.php" style="display: none;">
+            <h1 class="mb-4">Generate Invoice</h1>
+            <div class="form-group">
+                <label for="customerId">Customer NAME & ID</label>
+                <select class="form-control" id="customerId" name="customerId" required>
+                    <!-- Options will be loaded dynamically using JS -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="customerName">Customer GST No</label>
+                <input type="text" class="form-control" class="customerGSTNo" id="customerGSTNo" name="customerName" readonly>
+            </div>
+            <div class="form-group">
+                <label for="customerAddress">Customer Address</label>
+                <input type="text" class="form-control" id="customerAddress" name="customerAddress" readonly>
+            </div>
+            <div class="form-group">
+                <label for="customerPhone">Customer Phone Number</label>
+                <input type="text" class="form-control" id="customerPhone" name="customerPhone" readonly>
+            </div>
+            <div class="form-group">
+                <label for="customerGst">Customer Name</label>
+                <input type="text" class="form-control" id="customerName" name="customerName" readonly>
+            </div>
+            <div class="form-group">
+                <label for="productId">Products</label>
+                <div id="productList">
+                    <!-- Product selection fields will be added dynamically using JS -->
+                </div>
+                <button type="button" class="btn btn-secondary" id="addProduct">Add Product</button>
+            </div>
+            <div class="form-group">
+                <label for="totalAmount">Total Amount</label>
+                <input type="number" step="0.01" class="form-control" id="totalAmount" name="totalAmount" required>
+            </div>
+            <div class="form-group">
+                <label for="paymentStatus">Payment Status</label>
+                <select class="form-control" id="paymentStatus" name="paymentStatus" required>
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate Invoice</button>
+        </form>
+    </div>
+
+
+
+    <script>
+        function logout() {
+            // Redirect to logout.php to destroy session
+            window.location.href = "../../model/php/logout.php";
+        }
+        includeNavbar("nav.html", "navbar-container");
+    </script>
+    <script src="../../view/js/load_tabs.js"></script>
+    <script src="../../controller/js/fetch_product.js"></script>
+    <script src="../../controller/js/fetch_customer.js"></script>
+    <!-- <script src="../js/load_add_customer.js"></script> -->
+</body>
+</html>
