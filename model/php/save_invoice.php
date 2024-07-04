@@ -1,61 +1,73 @@
 <?php
 session_start();
-include_once '../../model/php/connection.php';
+include_once("../../model/php/connection.php");
+
+// Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // ******************************************************************************************************************************************
-   $custid = $_POST['customerId'];
-   $gstNo = $_POST['customerGstNo'];
-   $customerPhone = $_POST['customerPhone'];
-   $custidLower = strtolower($custid);
-   $gstNoLower = strtolower($gstNo);
-   $customerPhoneLower = strtolower($customerPhone);
 
-   // Extract first 2 letters of the name
-   $customerIdPart = strtolower(substr($custidLower, 0, 4));
+    // Ensure all necessary data is available
+    if (!isset($_SESSION['shopId'])) {
+        die('Missing session data. Please try again.');
+    }
 
-   // Extract first 3 characters of the GST number
-   $gstPart = substr($gstNoLower, 0, 3);
-   $customerPhonepart = substr($customerPhoneLower, 0, 4);
-
-   // Generate a random 4-digit number
-   $randomNumber = rand(1000, 9999);
-
-   // Combine parts to form the USERID
-   $invoiceId = $customerIdPart . $gstPart . $randomNumber . $customerPhonepart;
-// ******************************************************************************************************************************************
+    // Generate invoice ID
+    $invoiceId = uniqid('INV-');
     // Retrieve and sanitize form data
-    $customerId = $_POST['customerId'];
-    $shopId = $_POST['shopId'];
-    $productIds = $_POST['productId'];
-    $quantities = $_POST['quantity'];
-    $totalAmount = $_POST['totalAmount'];
-    $paymentStatus = $_POST['paymentStatus'];
+    $customerId = $_SESSION['customerId'];
+    $shopId = $_SESSION['shopId'];
+
+    // Check if productId and quantity arrays are set
+    if (isset($_POST['productId']) && isset($_POST['quantity'])) {
+        $productIds = $_POST['productId']; // This is an array of product IDs
+        $quantities = $_POST['quantity']; // This is an array of quantities
+    } else {
+        die('Missing product data. Please try again.');
+    }
+
+    // Validate and sanitize other fields if necessary
+    $totalAmount = isset($_POST['totalAmount']) ? $_POST['totalAmount'] : 0;
+    $paymentStatus = isset($_POST['paymentStatus']) ? $_POST['paymentStatus'] : '';
+
+    // Calculate total amount and check product quantities
+    $totalAmount = 0;
+    $products = [];
+    foreach ($productIds as $index => $productId) {
+        $quantity = $quantities[$index];
+        $sql = "SELECT NAME, PRICE, QUANTITY FROM product WHERE PRODUCTID = '$productId'";
+        $result = $conn->query($sql);
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            if ($quantity > $row['QUANTITY']) {
+                echo "Error: Quantity for product {$row['NAME']} (ID: $productId) exceeds available stock.";
+                exit();
+            }
+            $totalAmount += $row['PRICE'] * $quantity;
+            $products[] = [
+                'PRODUCTID' => $productId,
+                'NAME' => $row['NAME'],
+                'PRICE' => $row['PRICE'],
+                'quantity' => $quantity
+            ];
+        }
+    }
 
     // Insert invoice data into the invoice table
     $sql = "INSERT INTO invoice (INVOICEID, CUSTOMERID, SHOPID, TOTALAMOUNT, PAYMENTSTATUS) VALUES ('$invoiceId', '$customerId', '$shopId', '$totalAmount', '$paymentStatus')";
 
     if ($conn->query($sql) === TRUE) {
-        foreach ($productIds as $index => $productId) {
-            $quantity = $quantities[$index];
-            // Check product quantity
-            $sqlCheck = "SELECT QUANTITY FROM product WHERE PRODUCTID = '$productId' AND SHOPID = '$shopId'";
-            $result = $conn->query($sqlCheck);
-            $row = $result->fetch_assoc();
-            if ($quantity > $row['QUANTITY']) {
-                echo "Error: Quantity for product $productId exceeds available stock.";
-                exit();
-            }
-
-            // Insert products related to the invoice
-            $sqlProduct = "INSERT INTO invoice_products (INVOICEID, PRODUCTID, QUANTITY) VALUES ('$invoiceId', '$productId', '$quantity')";
+        // Insert products related to the invoice
+        foreach ($products as $product) {
+            $sqlProduct = "INSERT INTO invoice_products (INVOICEID, PRODUCTID, QUANTITY) VALUES ('$invoiceId', '{$product['PRODUCTID']}', '{$product['quantity']}')";
             $conn->query($sqlProduct);
-            
-            // Update product quantity in stock
-            $newQuantity = $row['QUANTITY'] - $quantity;
-            $sqlUpdate = "UPDATE product SET QUANTITY = '$newQuantity' WHERE PRODUCTID = '$productId' AND SHOPID = '$shopId'";
+
+            // Update product quantity in the product table
+            $sqlUpdate = "UPDATE product SET QUANTITY = QUANTITY - {$product['quantity']} WHERE PRODUCTID = '{$product['PRODUCTID']}'";
             $conn->query($sqlUpdate);
         }
-        echo "<script>alert('Invoice generated successfully')</script>";
+
+        // Output success message or redirect to invoice view page
+        echo "Invoice generated successfully";
+
     } else {
         echo "Error: " . $sql . "<br>" . $conn->error;
     }
